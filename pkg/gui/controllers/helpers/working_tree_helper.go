@@ -1,12 +1,15 @@
 package helpers
 
 import (
+	stdcontext "context"
 	"errors"
 	"fmt"
 	"os"
 	"regexp"
 	"strings"
+	"sync/atomic"
 
+	"github.com/jesseduffield/lazygit/pkg/ai"
 	"github.com/jesseduffield/lazygit/pkg/commands/git_commands"
 	"github.com/jesseduffield/lazygit/pkg/commands/models"
 	"github.com/jesseduffield/lazygit/pkg/config"
@@ -23,6 +26,8 @@ type WorkingTreeHelper struct {
 	commitsHelper        *CommitsHelper
 	gpgHelper            *GpgHelper
 	mergeAndRebaseHelper *MergeAndRebaseHelper
+	aiCommitGenerator    *ai.CommitMessageGenerator
+	aiCommitRequestID    uint64
 }
 
 func NewWorkingTreeHelper(
@@ -38,6 +43,7 @@ func NewWorkingTreeHelper(
 		commitsHelper:        commitsHelper,
 		gpgHelper:            gpgHelper,
 		mergeAndRebaseHelper: mergeAndRebaseHelper,
+		aiCommitGenerator:    ai.NewCommitMessageGenerator(),
 	}
 }
 
@@ -140,6 +146,53 @@ func (self *WorkingTreeHelper) HandleCommitPressWithMessage(initialMessage strin
 				SkipHooksPrefix: self.c.UserConfig().Git.SkipHookPrefix,
 			},
 		)
+
+		self.generateCommitMessageIfEnabled(initialMessage, forceSkipHooks)
+
+		return nil
+	})
+}
+
+func (self *WorkingTreeHelper) generateCommitMessageIfEnabled(initialMessage string, forceSkipHooks bool) {
+	requestID := atomic.AddUint64(&self.aiCommitRequestID, 1)
+
+	cfg := self.c.UserConfig().AI
+	if !cfg.Enabled || !cfg.AutoGenerateCommitMessage || forceSkipHooks {
+		return
+	}
+
+	openedMessage := self.commitsHelper.JoinCommitMessageAndUnwrappedDescription()
+	if openedMessage != initialMessage && initialMessage == "" {
+		return
+	}
+
+	self.c.OnWorker(func(_ gocui.Task) error {
+		diff, err := self.c.Git().Diff.GetCachedDiff()
+		if err != nil {
+			self.c.Log.WithError(err).Warn("failed to read staged diff for AI commit message")
+			return nil
+		}
+
+		message, err := self.aiCommitGenerator.Generate(stdcontext.Background(), cfg, diff)
+		if err != nil {
+			if !errors.Is(err, ai.ErrEmptyDiff) && !errors.Is(err, ai.ErrDisabled) {
+				self.c.Log.WithError(err).Warn("failed to generate AI commit message")
+				self.c.OnUIThread(func() error {
+					self.c.ErrorToast("AI commit message generation failed")
+					return nil
+				})
+			}
+			return nil
+		}
+
+		self.c.OnUIThread(func() error {
+			if atomic.LoadUint64(&self.aiCommitRequestID) != requestID {
+				return nil
+			}
+
+			self.commitsHelper.ReplaceMessageAndDescriptionInViewIfUnchanged(openedMessage, message)
+			return nil
+		})
 
 		return nil
 	})

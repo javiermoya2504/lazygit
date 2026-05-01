@@ -58,6 +58,16 @@ func (self *DiffCommands) GetDiff(staged bool, additionalArgs ...string) (string
 	).DontLog().RunWithOutput()
 }
 
+func (self *DiffCommands) GetCachedDiff() (string, error) {
+	return self.cmd.New(
+		NewGitCmd("diff").
+			Config("diff.noprefix=false").
+			Arg("--cached", "--no-ext-diff", "--no-color").
+			Dir(self.repoPaths.worktreePath).
+			ToArgv(),
+	).DontLog().RunWithOutput()
+}
+
 type DiffToolCmdOptions struct {
 	// The path to show a diff for. Pass "." for the entire repo.
 	Filepath string

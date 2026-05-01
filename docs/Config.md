@@ -498,6 +498,34 @@ git:
   # to 40 to disable truncation.
   truncateCopiedCommitHashesTo: 12
 
+# Config relating to local AI-assisted features
+ai:
+  # If true, enable local AI-assisted features. No remote providers are used by
+  # default.
+  enabled: false
+
+  # Local AI provider. Currently only 'ollama' is supported.
+  provider: ollama
+
+  # Model to use for generation, e.g. llama3, qwen2.5-coder:7b, deepseek-coder,
+  # gemma3.
+  model: qwen2.5-coder:7b
+
+  # Local provider endpoint. For Ollama this should be the server root, not the
+  # /api/generate path.
+  endpoint: http://localhost:11434
+
+  # Maximum number of staged diff lines to send to the local model. Set to 0 to
+  # disable truncation.
+  maxDiffLines: 300
+
+  # If true, generate a commit message automatically when opening the commit
+  # popup.
+  autoGenerateCommitMessage: true
+
+  # Request timeout in seconds for local AI generation.
+  timeoutSeconds: 10
+
 # Periodic update checks
 update:
   # One of: 'prompt' (default) | 'background' | 'never'

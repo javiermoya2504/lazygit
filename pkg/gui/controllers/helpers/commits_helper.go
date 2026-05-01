@@ -62,6 +62,19 @@ func (self *CommitsHelper) SetMessageAndDescriptionInView(message string) {
 	self.setSummaryAndDescriptionInView(summary, description)
 }
 
+func (self *CommitsHelper) ReplaceMessageAndDescriptionInViewIfUnchanged(originalMessage string, newMessage string) bool {
+	if !self.c.Views().CommitMessage.Visible {
+		return false
+	}
+
+	if self.JoinCommitMessageAndUnwrappedDescription() != originalMessage {
+		return false
+	}
+
+	self.SetMessageAndDescriptionInView(newMessage)
+	return true
+}
+
 func (self *CommitsHelper) SetPreservedMessageInView(message string) {
 	summary, description := self.SplitPreservedCommitMessage(message)
 	self.setSummaryAndDescriptionInView(summary, description)

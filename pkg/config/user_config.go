@@ -11,6 +11,8 @@ type UserConfig struct {
 	Gui GuiConfig `yaml:"gui"`
 	// Config relating to git
 	Git GitConfig `yaml:"git"`
+	// Config relating to local AI-assisted features
+	AI AIConfig `yaml:"ai"`
 	// Periodic update checks
 	Update UpdateConfig `yaml:"update"`
 	// Background refreshes
@@ -47,6 +49,23 @@ type RefresherConfig struct {
 	// Re-fetch interval in seconds.
 	// Auto-fetch can be disabled via option 'git.autoFetch'.
 	FetchInterval int `yaml:"fetchInterval" jsonschema:"minimum=0"`
+}
+
+type AIConfig struct {
+	// If true, enable local AI-assisted features. No remote providers are used by default.
+	Enabled bool `yaml:"enabled"`
+	// Local AI provider. Currently only 'ollama' is supported.
+	Provider string `yaml:"provider" jsonschema:"enum=ollama"`
+	// Model to use for generation, e.g. llama3, qwen2.5-coder:7b, deepseek-coder, gemma3.
+	Model string `yaml:"model"`
+	// Local provider endpoint. For Ollama this should be the server root, not the /api/generate path.
+	Endpoint string `yaml:"endpoint"`
+	// Maximum number of staged diff lines to send to the local model. Set to 0 to disable truncation.
+	MaxDiffLines int `yaml:"maxDiffLines" jsonschema:"minimum=0"`
+	// If true, generate a commit message automatically when opening the commit popup.
+	AutoGenerateCommitMessage bool `yaml:"autoGenerateCommitMessage"`
+	// Request timeout in seconds for local AI generation.
+	TimeoutSeconds int `yaml:"timeoutSeconds" jsonschema:"minimum=1"`
 }
 
 func (c *RefresherConfig) RefreshIntervalDuration() time.Duration {
@@ -886,6 +905,15 @@ func GetDefaultConfigForPlatform(platform string) *UserConfig {
 			BranchPrefix:                 "",
 			ParseEmoji:                   false,
 			TruncateCopiedCommitHashesTo: 12,
+		},
+		AI: AIConfig{
+			Enabled:                   false,
+			Provider:                  "ollama",
+			Model:                     "qwen2.5-coder:7b",
+			Endpoint:                  "http://localhost:11434",
+			MaxDiffLines:              300,
+			AutoGenerateCommitMessage: true,
+			TimeoutSeconds:            10,
 		},
 		Refresher: RefresherConfig{
 			RefreshInterval: 10,

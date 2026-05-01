@@ -3,6 +3,53 @@
   "$id": "https://github.com/jesseduffield/lazygit/pkg/config/user-config",
   "$ref": "#/$defs/UserConfig",
   "$defs": {
+    "AIConfig": {
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "If true, enable local AI-assisted features. No remote providers are used by default.",
+          "default": false
+        },
+        "provider": {
+          "type": "string",
+          "enum": [
+            "ollama"
+          ],
+          "description": "Local AI provider. Currently only 'ollama' is supported.",
+          "default": "ollama"
+        },
+        "model": {
+          "type": "string",
+          "description": "Model to use for generation, e.g. llama3, qwen2.5-coder:7b, deepseek-coder, gemma3.",
+          "default": "qwen2.5-coder:7b"
+        },
+        "endpoint": {
+          "type": "string",
+          "description": "Local provider endpoint. For Ollama this should be the server root, not the /api/generate path.",
+          "default": "http://localhost:11434"
+        },
+        "maxDiffLines": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum number of staged diff lines to send to the local model. Set to 0 to disable truncation.",
+          "default": 300
+        },
+        "autoGenerateCommitMessage": {
+          "type": "boolean",
+          "description": "If true, generate a commit message automatically when opening the commit popup.",
+          "default": true
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Request timeout in seconds for local AI generation.",
+          "default": 10
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "Config relating to local AI-assisted features"
+    },
     "CommitConfig": {
       "properties": {
         "signOff": {
@@ -2005,6 +2052,10 @@
         "git": {
           "$ref": "#/$defs/GitConfig",
           "description": "Config relating to git"
+        },
+        "ai": {
+          "$ref": "#/$defs/AIConfig",
+          "description": "Config relating to local AI-assisted features"
         },
         "update": {
           "$ref": "#/$defs/UpdateConfig",
