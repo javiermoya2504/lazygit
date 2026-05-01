@@ -21,7 +21,8 @@ import (
 
 const (
 	defaultOllamaGeneratePath = "/api/generate"
-	defaultTimeout           = 10 * time.Second
+	defaultTimeout            = 10 * time.Second
+	maxCommitSummaryLength    = 72
 )
 
 var (
@@ -77,7 +78,7 @@ func (self *CommitMessageGenerator) Generate(ctx context.Context, cfg config.AIC
 		return "", err
 	}
 
-	message = sanitizeCommitMessage(message)
+	message = normalizeCommitMessage(message)
 	if message == "" {
 		return "", ErrEmptyResponse
 	}
@@ -202,18 +203,21 @@ func buildCommitMessagePrompt(diff string) string {
 	return strings.TrimSpace(`You are an expert software engineer.
 Analyze this git diff and generate a concise and precise conventional commit message.
 Do not hallucinate functionality.
-Keep title under 72 chars.
+Keep the title under 72 characters.
 
 Return only the commit message. Use this format:
 <type>(optional scope): <title>
 
-Optional body if it adds important context.
+<body>
+
+The body is required. Keep it to 1-3 concise lines that explain what changed and why.
+Do not include bullets unless the diff clearly needs multiple points.
 
 Git diff:
 ` + diff)
 }
 
-func sanitizeCommitMessage(message string) string {
+func normalizeCommitMessage(message string) string {
 	message = strings.TrimSpace(message)
 	message = strings.TrimPrefix(message, "```")
 	message = strings.TrimSuffix(message, "```")
@@ -224,7 +228,26 @@ func sanitizeCommitMessage(message string) string {
 		lines = lines[1:]
 	}
 
+	if len(lines) == 0 {
+		return ""
+	}
+
+	lines[0] = trimCommitSummary(lines[0])
 	return strings.TrimSpace(strings.Join(lines, "\n"))
+}
+
+func trimCommitSummary(summary string) string {
+	summary = strings.TrimSpace(summary)
+	if len(summary) <= maxCommitSummaryLength {
+		return summary
+	}
+
+	truncated := summary[:maxCommitSummaryLength]
+	if index := strings.LastIndex(truncated, " "); index >= maxCommitSummaryLength/2 {
+		truncated = truncated[:index]
+	}
+
+	return strings.TrimRight(truncated, " .,:;")
 }
 
 func TruncateDiff(diff string, maxLines int) string {

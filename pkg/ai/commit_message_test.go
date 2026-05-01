@@ -3,21 +3,25 @@ package ai
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/jesseduffield/lazygit/pkg/config"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestGenerateCommitMessageWithOllama(t *testing.T) {
 	var request ollamaGenerateRequest
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(t, "/api/generate", r.URL.Path)
-		require.NoError(t, json.NewDecoder(r.Body).Decode(&request))
-		_, _ = w.Write([]byte(`{"response":"feat(auth): add token refresh"}`))
+		if r.URL.Path != "/api/generate" {
+			t.Fatalf("expected path /api/generate, got %s", r.URL.Path)
+		}
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Fatal(err)
+		}
+		_, _ = w.Write([]byte(`{"response":"feat(auth): add token refresh\n\nExplain refresh token validation for API sessions."}`))
 	}))
 	defer server.Close()
 
@@ -32,35 +36,62 @@ func TestGenerateCommitMessageWithOllama(t *testing.T) {
 		TimeoutSeconds:            10,
 	}, "diff --git a/auth.go b/auth.go\n+refresh()")
 
-	require.NoError(t, err)
-	assert.Equal(t, "feat(auth): add token refresh", message)
-	assert.Equal(t, "qwen2.5-coder", request.Model)
-	assert.False(t, request.Stream)
-	assert.Contains(t, request.Prompt, "Keep title under 72 chars.")
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected := "feat(auth): add token refresh\n\nExplain refresh token validation for API sessions."
+	if message != expected {
+		t.Fatalf("expected generated message, got %q", message)
+	}
+	if request.Model != "qwen2.5-coder" {
+		t.Fatalf("expected model qwen2.5-coder, got %s", request.Model)
+	}
+	if request.Stream {
+		t.Fatal("expected stream to be false")
+	}
+	if !strings.Contains(request.Prompt, "The body is required.") {
+		t.Fatalf("expected prompt to contain instruction, got %q", request.Prompt)
+	}
+}
+
+func TestNormalizeCommitMessageTrimsLongSummary(t *testing.T) {
+	message := normalizeCommitMessage("feat(api): add dataset preview and export endpoints for auditing ML datasets\n\nDescribe the new dataset audit endpoints.")
+	lines := strings.Split(message, "\n")
+
+	if len(lines[0]) > maxCommitSummaryLength {
+		t.Fatalf("expected summary under %d chars, got %d: %q", maxCommitSummaryLength, len(lines[0]), lines[0])
+	}
+	assertEqual(t, "Describe the new dataset audit endpoints.", lines[2])
 }
 
 func TestTruncateDiff(t *testing.T) {
 	diff := "one\ntwo\nthree"
 
-	assert.Equal(t, "one\ntwo\n\n[Diff truncated: showing first 2 lines]", TruncateDiff(diff, 2))
-	assert.Equal(t, diff, TruncateDiff(diff, 3))
-	assert.Equal(t, diff, TruncateDiff(diff, 0))
+	assertEqual(t, "one\ntwo\n\n[Diff truncated: showing first 2 lines]", TruncateDiff(diff, 2))
+	assertEqual(t, diff, TruncateDiff(diff, 3))
+	assertEqual(t, diff, TruncateDiff(diff, 0))
 }
 
 func TestOllamaGenerateURLAcceptsRootOrGenerateEndpoint(t *testing.T) {
 	root, err := ollamaGenerateURL("http://localhost:11434")
-	require.NoError(t, err)
-	assert.Equal(t, "http://localhost:11434/api/generate", root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertEqual(t, "http://localhost:11434/api/generate", root)
 
 	generateEndpoint, err := ollamaGenerateURL("http://localhost:11434/api/generate")
-	require.NoError(t, err)
-	assert.Equal(t, "http://localhost:11434/api/generate", generateEndpoint)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertEqual(t, "http://localhost:11434/api/generate", generateEndpoint)
 }
 
 func TestOllamaGenerateURLRejectsRemoteEndpoint(t *testing.T) {
 	_, err := ollamaGenerateURL("https://example.com")
 
-	assert.ErrorIs(t, err, ErrInvalidEndpoint)
+	if !errors.Is(err, ErrInvalidEndpoint) {
+		t.Fatalf("expected ErrInvalidEndpoint, got %v", err)
+	}
 }
 
 func TestGenerateRejectsEmptyDiff(t *testing.T) {
@@ -75,5 +106,15 @@ func TestGenerateRejectsEmptyDiff(t *testing.T) {
 		TimeoutSeconds:            10,
 	}, "   ")
 
-	assert.ErrorIs(t, err, ErrEmptyDiff)
+	if !errors.Is(err, ErrEmptyDiff) {
+		t.Fatalf("expected ErrEmptyDiff, got %v", err)
+	}
+}
+
+func assertEqual(t *testing.T, expected, actual string) {
+	t.Helper()
+
+	if expected != actual {
+		t.Fatalf("expected %q, got %q", expected, actual)
+	}
 }
