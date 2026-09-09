@@ -27,6 +27,8 @@ import (
 )
 
 type cliArgs struct {
+	ModelCommand       string
+	ModelName          string
 	RepoPath           string
 	FilterPath         string
 	GitArg             string
@@ -52,6 +54,18 @@ type BuildInfo struct {
 
 func Start(buildInfo *BuildInfo, integrationTest integrationTypes.IntegrationTest) {
 	cliArgs := parseCliArgsAndEnvVars()
+	if cliArgs.ModelCommand != "" {
+		if cliArgs.CustomConfigFile != "" {
+			os.Setenv("LG_CONFIG_FILE", cliArgs.CustomConfigFile)
+		}
+		if cliArgs.UseConfigDir != "" {
+			os.Setenv("CONFIG_DIR", cliArgs.UseConfigDir)
+		}
+		if err := runModelCommand(cliArgs.ModelCommand, cliArgs.ModelName, os.Stdout); err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
 	mergeBuildInfo(buildInfo)
 
 	if cliArgs.RepoPath != "" {
@@ -222,13 +236,33 @@ func parseCliArgsAndEnvVars() *cliArgs {
 	screenMode := ""
 	flaggy.String(&screenMode, "sm", "screen-mode", "The initial screen-mode, which determines the size of the focused panel. Valid options: 'normal' (default), 'half', 'full'")
 
+	modelName := ""
+	pull := flaggy.NewSubcommand("pull")
+	pull.Description = "Download an Ollama model and enable it for AI commits"
+	pull.AddPositionalValue(&modelName, "model", 1, true, "Ollama model name, e.g. qwen2.5-coder:3b")
+	use := flaggy.NewSubcommand("use")
+	use.Description = "Select an installed Ollama model and enable AI commits"
+	use.AddPositionalValue(&modelName, "model", 1, true, "Installed model name")
+	list := flaggy.NewSubcommand("list")
+	list.Description = "List installed Ollama models and show the selected model"
+	flaggy.AttachSubcommand(pull, 1)
+	flaggy.AttachSubcommand(use, 1)
+	flaggy.AttachSubcommand(list, 1)
 	flaggy.Parse()
+	modelCommand := ""
+	for _, command := range []*flaggy.Subcommand{pull, use, list} {
+		if command.Used {
+			modelCommand = command.Name
+		}
+	}
 
 	if os.Getenv("DEBUG") == "TRUE" {
 		debug = true
 	}
 
 	return &cliArgs{
+		ModelCommand:       modelCommand,
+		ModelName:          modelName,
 		RepoPath:           repoPath,
 		FilterPath:         filterPath,
 		GitArg:             gitArg,
