@@ -211,6 +211,12 @@ go test ./pkg/ai ./pkg/config ./pkg/gui/controllers/helpers -short
 
 La configuración de GoReleaser produce binarios llamados `lazygit-ai` (`lazygit-ai.exe` en Windows). Al subir un tag `vX.Y.Z`, GitHub Actions ejecuta las comprobaciones y publica los binarios y `checksums.txt` en este fork. La primera distribución del fork es `v1.0.1`; su numeración es independiente de upstream.
 
+Si el evento del tag no inicia el workflow, también puedes publicar un tag existente desde **Actions → Release → Run workflow**, o con:
+
+```sh
+gh workflow run release.yml -R javiermoya2504/lazygit-ai --ref lazygitai -f tag=v1.0.1
+```
+
 Consulta la [documentación de configuración](docs/Config.md), los [atajos](docs/keybindings/Keybindings_en.md) y la [guía de desarrollo](docs/dev/README.md).
 
 ## Créditos y licencia
