@@ -1,17 +1,21 @@
+BINARY := lazygit-ai$(shell go env GOEXE)
+INSTALL_DIR ?= $(shell go env GOPATH)/bin
+
 .PHONY: all
 all: build
 
 .PHONY: build
 build:
-	go build -gcflags='all=-N -l'
+	go build -gcflags='all=-N -l' -o $(BINARY) .
 
 .PHONY: install
 install:
-	go install
+	mkdir -p "$(INSTALL_DIR)"
+	go build -o "$(INSTALL_DIR)/$(BINARY)" .
 
 .PHONY: run
 run: build
-	./lazygit
+	./$(BINARY)
 
 # Run `make run-debug` in one terminal tab and `make print-log` in another to view the program and its log output side by side
 .PHONY: run-debug

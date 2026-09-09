@@ -1,7 +1,10 @@
 version: 2
 
+project_name: lazygit-ai
+
 builds:
-  - env:
+  - binary: lazygit-ai
+    env:
       - CGO_ENABLED=0
     goos:
       - freebsd

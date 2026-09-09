@@ -16,6 +16,8 @@ coverage.txt
 # Binaries
 lazygit
 lazygit.exe
+lazygit-ai
+lazygit-ai.exe
 
 test/git_server/data
 

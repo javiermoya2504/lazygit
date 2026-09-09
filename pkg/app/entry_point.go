@@ -136,7 +136,7 @@ func Start(buildInfo *BuildInfo, integrationTest integrationTypes.IntegrationTes
 	}
 	defer os.RemoveAll(tempDir)
 
-	appConfig, err := config.NewAppConfig("lazygit", buildInfo.Version, buildInfo.Commit, buildInfo.Date, buildInfo.BuildSource, cliArgs.Debug, tempDir)
+	appConfig, err := config.NewAppConfig("lazygit-ai", buildInfo.Version, buildInfo.Commit, buildInfo.Date, buildInfo.BuildSource, cliArgs.Debug, tempDir)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
