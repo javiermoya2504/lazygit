@@ -48,7 +48,7 @@ Cierra `lazygit-ai` y vuelve a ejecutar el comando de instalación de tu sistema
 
 ### Opciones del instalador
 
-Puedes descargar e inspeccionar los scripts antes de ejecutarlos: [Unix](scripts/install.sh) y [Windows](scripts/install.ps1).
+Puedes descargar e inspeccionar los scripts antes de Ejecutarlos: [Unix](scripts/install.sh) y [Windows](scripts/install.ps1).
 
 Variables opcionales: `LAZYGIT_AI_VERSION` fija una versión específica (por ejemplo `v1.1.0`) y `LAZYGIT_AI_INSTALL_DIR` cambia la carpeta destino. En Unix:
 
