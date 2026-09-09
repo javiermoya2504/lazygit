@@ -47,7 +47,10 @@ main() {
     else
         echo 'Install sha256sum or shasum to verify the download.' >&2; exit 1
     fi
-    [ -n "$expected" ] && [ "$actual" = "$expected" ] || { echo 'SHA256 verification failed; installation cancelled.' >&2; exit 1; }
+    if [ -z "$expected" ] || [ "$actual" != "$expected" ]; then
+        echo 'SHA256 verification failed; installation cancelled.' >&2
+        exit 1
+    fi
     tar -xzf "$tmp_dir/$archive" -C "$tmp_dir" lazygit-ai
     mkdir -p "$install_dir"
     install -m 755 "$tmp_dir/lazygit-ai" "$install_dir/lazygit-ai"

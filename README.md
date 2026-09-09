@@ -30,10 +30,10 @@ Instala en `%LOCALAPPDATA%\Programs\lazygit-ai` y agrega esa carpeta al `Path` d
 
 Ejecuta `lazygit-ai --version` para comprobar la instalación. Para actualizar, vuelve a ejecutar el mismo instalador. Puedes descargar e inspeccionar los scripts antes de ejecutarlos: [Unix](scripts/install.sh) y [Windows](scripts/install.ps1).
 
-Variables opcionales: `LAZYGIT_AI_VERSION` fija una versión (por ejemplo `v1.0.0`) y `LAZYGIT_AI_INSTALL_DIR` cambia el destino. En Unix:
+Variables opcionales: `LAZYGIT_AI_VERSION` fija una versión (por ejemplo `v1.0.1`) y `LAZYGIT_AI_INSTALL_DIR` cambia el destino. En Unix:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/javiermoya2504/lazygit-ai/lazygitai/scripts/install.sh | LAZYGIT_AI_VERSION=v1.0.0 sh
+curl -fsSL https://raw.githubusercontent.com/javiermoya2504/lazygit-ai/lazygitai/scripts/install.sh | LAZYGIT_AI_VERSION=v1.0.1 sh
 ```
 
 También puedes descargar los archivos de [Releases](https://github.com/javiermoya2504/lazygit-ai/releases). Si falla la descarga, comprueba tu conexión y que exista un archivo para tu sistema y arquitectura en la versión elegida.
@@ -209,7 +209,7 @@ Desde la carpeta del código fuente, ejecuta `git pull --ff-only`, vuelve a comp
 go test ./pkg/ai ./pkg/config ./pkg/gui/controllers/helpers -short
 ```
 
-La configuración de GoReleaser produce binarios llamados `lazygit-ai` (`lazygit-ai.exe` en Windows). Al subir un tag `vX.Y.Z`, GitHub Actions ejecuta las comprobaciones y publica los binarios y `checksums.txt` en este fork. La primera distribución del fork es `v1.0.0`; su numeración es independiente de upstream.
+La configuración de GoReleaser produce binarios llamados `lazygit-ai` (`lazygit-ai.exe` en Windows). Al subir un tag `vX.Y.Z`, GitHub Actions ejecuta las comprobaciones y publica los binarios y `checksums.txt` en este fork. La primera distribución del fork es `v1.0.1`; su numeración es independiente de upstream.
 
 Consulta la [documentación de configuración](docs/Config.md), los [atajos](docs/keybindings/Keybindings_en.md) y la [guía de desarrollo](docs/dev/README.md).
 
