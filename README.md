@@ -6,7 +6,7 @@ La IA analiza los cambios preparados para commit (*staged*) y propone un título
 
 ## Instalación rápida (sin Go)
 
-Necesitas Git para usar la aplicación. El instalador descarga el binario de la última release, detecta tu sistema y arquitectura y verifica su SHA256 antes de instalarlo. Ollama y los modelos se configuran por separado, como se explica más abajo.
+Esta es la opción recomendada: **no necesitas Go ni clonar el repositorio**. Necesitas Git para usar la aplicación. El instalador descarga el binario de la última release, detecta tu sistema y arquitectura y verifica su SHA256 antes de instalarlo. Ollama y los modelos se configuran por separado, como se explica más abajo.
 
 ### macOS y Linux con curl
 
@@ -28,7 +28,27 @@ irm https://raw.githubusercontent.com/javiermoya2504/lazygit-ai/lazygitai/script
 
 Instala en `%LOCALAPPDATA%\Programs\lazygit-ai` y agrega esa carpeta al `Path` de tu usuario. Abre otra terminal si hace falta.
 
-Ejecuta `lazygit-ai --version` para comprobar la instalación. Para actualizar, vuelve a ejecutar el mismo instalador. Puedes descargar e inspeccionar los scripts antes de ejecutarlos: [Unix](scripts/install.sh) y [Windows](scripts/install.ps1).
+### Comprobar y abrir
+
+```sh
+lazygit-ai --version
+```
+
+Después, abre una terminal dentro de cualquier repositorio Git y ejecuta:
+
+```sh
+lazygit-ai
+```
+
+Para generar mensajes con IA, continúa con [Instalar y preparar Ollama](#instalar-y-preparar-ollama) y [Configurar lazygit-ai](#configurar-lazygit-ai).
+
+### Actualizar
+
+Cierra `lazygit-ai` y vuelve a ejecutar el comando de instalación de tu sistema. Descarga la última release y reemplaza el ejecutable; conserva tu configuración y los modelos de Ollama.
+
+### Opciones del instalador
+
+Puedes descargar e inspeccionar los scripts antes de ejecutarlos: [Unix](scripts/install.sh) y [Windows](scripts/install.ps1).
 
 Variables opcionales: `LAZYGIT_AI_VERSION` fija una versión (por ejemplo `v1.0.1`) y `LAZYGIT_AI_INSTALL_DIR` cambia el destino. En Unix:
 
@@ -37,72 +57,6 @@ curl -fsSL https://raw.githubusercontent.com/javiermoya2504/lazygit-ai/lazygitai
 ```
 
 También puedes descargar los archivos de [Releases](https://github.com/javiermoya2504/lazygit-ai/releases). Si falla la descarga, comprueba tu conexión y que exista un archivo para tu sistema y arquitectura en la versión elegida.
-
-## Instalación desde código fuente
-
-Necesitas **Git** y **Go 1.25 o posterior** en el `PATH`. Puedes obtenerlos desde [Git](https://git-scm.com/downloads) y [Go](https://go.dev/dl/). Comprueba `git --version` y `go version` después de instalarlos; si alguna dependencia solicita una versión más reciente de Go, permite su descarga automática o actualiza Go.
-
-Las instrucciones compilan este fork desde código fuente. Los paquetes habituales llamados `lazygit` instalan el proyecto original y no incluyen necesariamente estas funciones de IA.
-
-El repositorio y el ejecutable se llaman `lazygit-ai`. La rama predeterminada de este fork, `lazygitai`, incluye la integración con Ollama.
-
-### macOS
-
-Instala Git y Go con los instaladores anteriores. Después, en Terminal:
-
-```sh
-git clone https://github.com/javiermoya2504/lazygit-ai.git lazygit-ai
-cd lazygit-ai
-go build -o lazygit-ai .
-mkdir -p "$HOME/.local/bin"
-install -m 755 lazygit-ai "$HOME/.local/bin/lazygit-ai"
-export PATH="$HOME/.local/bin:$PATH"
-lazygit-ai --version
-```
-
-Para conservar el `PATH` al abrir otra terminal, agrega `export PATH="$HOME/.local/bin:$PATH"` a `~/.zshrc` (o al archivo de inicio de tu shell).
-
-### Linux
-
-Instala Git con el gestor de paquetes de tu distribución y Go desde su instalador oficial si la versión disponible es anterior a la requerida. Después:
-
-```sh
-git clone https://github.com/javiermoya2504/lazygit-ai.git lazygit-ai
-cd lazygit-ai
-go build -o lazygit-ai .
-mkdir -p "$HOME/.local/bin"
-install -m 755 lazygit-ai "$HOME/.local/bin/lazygit-ai"
-export PATH="$HOME/.local/bin:$PATH"
-lazygit-ai --version
-```
-
-Agrega `export PATH="$HOME/.local/bin:$PATH"` a `~/.bashrc` o `~/.zshrc`, según tu shell, para conservarlo.
-
-### Windows (PowerShell)
-
-Instala Git y Go con sus instaladores oficiales y abre una nueva ventana de PowerShell:
-
-```powershell
-git clone https://github.com/javiermoya2504/lazygit-ai.git lazygit-ai
-Set-Location lazygit-ai
-go build -o lazygit-ai.exe .
-if ($LASTEXITCODE -ne 0) { throw "Falló la compilación" }
-$binDir = Join-Path $env:LOCALAPPDATA 'Programs\lazygit-ai'
-New-Item -ItemType Directory -Force -Path $binDir | Out-Null
-Copy-Item .\lazygit-ai.exe $binDir -Force
-$env:Path = "$binDir;$env:Path"
-lazygit-ai --version
-```
-
-Para usarlo en futuras sesiones, agrega `%LOCALAPPDATA%\Programs\lazygit-ai` al `Path` de tu usuario desde **Editar las variables de entorno de esta cuenta**, y abre otra terminal.
-
-### Si ya tienes el fork clonado
-
-Desde su carpeta, compila con `go build -o lazygit-ai .` (Windows: `go build -o lazygit-ai.exe .`) y copia el resultado a la ubicación de instalación indicada arriba.
-
-Con GNU Make también puedes ejecutar `make build`, `make run` o `make install`. Este último instala `lazygit-ai` en el directorio `bin` de `go env GOPATH`; puedes elegir otro con `make install INSTALL_DIR="$HOME/.local/bin"`.
-
-El módulo Go conserva la ruta interna de upstream para facilitar su mantenimiento. Usa los comandos de compilación anteriores para obtener el ejecutable con el nombre del fork.
 
 ## Instalar y preparar Ollama
 
@@ -191,7 +145,7 @@ La generación usa únicamente el diff staged. Si comienzas a editar mientras ll
 
 | Problema | Qué revisar |
 | --- | --- |
-| `lazygit-ai` no se encuentra | Comprueba el `PATH` o ejecuta `./lazygit-ai` (PowerShell: `.\lazygit-ai.exe`) desde la carpeta donde compilaste. |
+| `lazygit-ai` no se encuentra | Comprueba el `PATH` y abre otra terminal. En macOS/Linux puedes probar `~/.local/bin/lazygit-ai`; en PowerShell, `& "$env:LOCALAPPDATA\Programs\lazygit-ai\lazygit-ai.exe"` si usaste el destino predeterminado. |
 | No aparece una propuesta | Verifica `enabled`, `autoGenerateCommitMessage`, que haya cambios staged y que el formulario no tenga un borrador conservado. |
 | `AI commit message generation failed` | Comprueba `ollama list`, el modelo descargado y el endpoint; revisa los logs para conocer el error concreto. |
 | Modelo no encontrado | Ejecuta `ollama pull` con el mismo nombre y etiqueta de `ai.model`. |
@@ -201,9 +155,75 @@ La generación usa únicamente el diff staged. Si comienzas a editar mientras ll
 
 Para diagnosticar, inicia `lazygit-ai --debug` y, desde otra terminal, ejecuta `lazygit-ai --logs`. Si usas `--use-config-dir`, indica la misma carpeta en ambos comandos.
 
-## Actualizar y desarrollar
+## Instalación desde código fuente
 
-Desde la carpeta del código fuente, ejecuta `git pull --ff-only`, vuelve a compilar y copia el nuevo binario a tu directorio de instalación.
+Necesitas **Git** y **Go 1.25 o posterior** en el `PATH`. Puedes obtenerlos desde [Git](https://git-scm.com/downloads) y [Go](https://go.dev/dl/). Comprueba `git --version` y `go version` después de instalarlos; si alguna dependencia solicita una versión más reciente de Go, permite su descarga automática o actualiza Go.
+
+Las instrucciones compilan este fork desde código fuente. Los paquetes habituales llamados `lazygit` instalan el proyecto original y no incluyen necesariamente estas funciones de IA.
+
+El repositorio y el ejecutable se llaman `lazygit-ai`. La rama predeterminada de este fork, `lazygitai`, incluye la integración con Ollama.
+
+### macOS
+
+Instala Git y Go con los instaladores anteriores. Después, en Terminal:
+
+```sh
+git clone https://github.com/javiermoya2504/lazygit-ai.git lazygit-ai
+cd lazygit-ai
+go build -o lazygit-ai .
+mkdir -p "$HOME/.local/bin"
+install -m 755 lazygit-ai "$HOME/.local/bin/lazygit-ai"
+export PATH="$HOME/.local/bin:$PATH"
+lazygit-ai --version
+```
+
+Para conservar el `PATH` al abrir otra terminal, agrega `export PATH="$HOME/.local/bin:$PATH"` a `~/.zshrc` (o al archivo de inicio de tu shell).
+
+### Linux
+
+Instala Git con el gestor de paquetes de tu distribución y Go desde su instalador oficial si la versión disponible es anterior a la requerida. Después:
+
+```sh
+git clone https://github.com/javiermoya2504/lazygit-ai.git lazygit-ai
+cd lazygit-ai
+go build -o lazygit-ai .
+mkdir -p "$HOME/.local/bin"
+install -m 755 lazygit-ai "$HOME/.local/bin/lazygit-ai"
+export PATH="$HOME/.local/bin:$PATH"
+lazygit-ai --version
+```
+
+Agrega `export PATH="$HOME/.local/bin:$PATH"` a `~/.bashrc` o `~/.zshrc`, según tu shell, para conservarlo.
+
+### Windows (PowerShell)
+
+Instala Git y Go con sus instaladores oficiales y abre una nueva ventana de PowerShell:
+
+```powershell
+git clone https://github.com/javiermoya2504/lazygit-ai.git lazygit-ai
+Set-Location lazygit-ai
+go build -o lazygit-ai.exe .
+if ($LASTEXITCODE -ne 0) { throw "Falló la compilación" }
+$binDir = Join-Path $env:LOCALAPPDATA 'Programs\lazygit-ai'
+New-Item -ItemType Directory -Force -Path $binDir | Out-Null
+Copy-Item .\lazygit-ai.exe $binDir -Force
+$env:Path = "$binDir;$env:Path"
+lazygit-ai --version
+```
+
+Para usarlo en futuras sesiones, agrega `%LOCALAPPDATA%\Programs\lazygit-ai` al `Path` de tu usuario desde **Editar las variables de entorno de esta cuenta**, y abre otra terminal.
+
+### Si ya tienes el fork clonado
+
+Desde su carpeta, compila con `go build -o lazygit-ai .` (Windows: `go build -o lazygit-ai.exe .`) y copia el resultado a la ubicación de instalación indicada arriba.
+
+Con GNU Make también puedes ejecutar `make build`, `make run` o `make install`. Este último instala `lazygit-ai` en el directorio `bin` de `go env GOPATH`; puedes elegir otro con `make install INSTALL_DIR="$HOME/.local/bin"`.
+
+El módulo Go conserva la ruta interna de upstream para facilitar su mantenimiento. Usa los comandos de compilación anteriores para obtener el ejecutable con el nombre del fork.
+
+## Desarrollo y publicación
+
+Para actualizar una instalación compilada desde código fuente, ejecuta `git pull --ff-only`, vuelve a compilar y copia el nuevo binario a tu directorio de instalación.
 
 ```sh
 go test ./pkg/ai ./pkg/config ./pkg/gui/controllers/helpers -short
