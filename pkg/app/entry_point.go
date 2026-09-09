@@ -201,7 +201,13 @@ func parseCliArgsAndEnvVars() *cliArgs {
 	flaggy.String(&filterPath, "f", "filter", "Path to filter on in `git log -- <path>`. When in filter mode, the commits, reflog, and stash are filtered based on the given path, and some operations are restricted")
 
 	gitArg := ""
-	flaggy.AddPositionalValue(&gitArg, "git-arg", 1, false, "Panel to focus upon opening lazygit. Accepted values (based on git terminology): status, branch, log, stash. Ignored if --filter arg is passed.")
+	panels := []*flaggy.Subcommand{}
+	for _, name := range []string{"status", "branch", "log", "stash"} {
+		panel := flaggy.NewSubcommand(name)
+		panel.Description = "Open the " + name + " panel (ignored with --filter)"
+		flaggy.AttachSubcommand(panel, 1)
+		panels = append(panels, panel)
+	}
 
 	printVersionInfo := false
 	flaggy.Bool(&printVersionInfo, "v", "version", "Print the current version")
@@ -249,6 +255,11 @@ func parseCliArgsAndEnvVars() *cliArgs {
 	flaggy.AttachSubcommand(use, 1)
 	flaggy.AttachSubcommand(list, 1)
 	flaggy.Parse()
+	for _, panel := range panels {
+		if panel.Used {
+			gitArg = panel.Name
+		}
+	}
 	modelCommand := ""
 	for _, command := range []*flaggy.Subcommand{pull, use, list} {
 		if command.Used {

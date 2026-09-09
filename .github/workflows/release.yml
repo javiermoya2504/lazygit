@@ -27,7 +27,7 @@ jobs:
         with:
           go-version: '1.26.x'
       - name: Test AI integration
-        run: go test ./pkg/ai ./pkg/config ./pkg/gui/controllers/helpers -short
+        run: go test ./pkg/app ./pkg/ai ./pkg/config ./pkg/gui/controllers/helpers -short
       - name: Validate shell installer
         run: shellcheck scripts/install.sh
       - name: Validate PowerShell installer syntax

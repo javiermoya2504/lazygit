@@ -40,7 +40,7 @@ Después, abre una terminal dentro de cualquier repositorio Git y ejecuta:
 lazygit-ai
 ```
 
-Para generar mensajes con IA, continúa con [Instalar y preparar Ollama](#instalar-y-preparar-ollama) y [Configurar lazygit-ai](#configurar-lazygit-ai).
+Para generar mensajes con IA, instala y abre [Ollama](#instalar-y-preparar-ollama), y ejecuta `lazygit-ai pull qwen2.5-coder:3b`. No necesitas editar archivos de configuración. Estos comandos requieren `lazygit-ai` **v1.1.0 o posterior**; si tienes una versión anterior, vuelve a ejecutar el instalador.
 
 ### Actualizar
 
@@ -68,12 +68,28 @@ También puedes descargar los archivos de [Releases](https://github.com/javiermo
   curl -fsSL https://ollama.com/install.sh | sh
   ```
 
-Comprueba que el servicio responde y descarga el modelo configurado por defecto:
+Con Ollama abierto, descarga y activa un modelo desde lazygit-ai:
 
 ```sh
-ollama list
-ollama pull qwen2.5-coder:7b
+lazygit-ai pull qwen2.5-coder:3b
+lazygit-ai list
 ```
+
+`pull` muestra el progreso de descarga y, cuando termina, guarda el modelo y activa la generación de mensajes de commit. `list` muestra los modelos instalados en Ollama, marca el seleccionado con `*` e indica si la IA está habilitada. Estos comandos funcionan fuera de un repositorio Git.
+
+Si ya descargaste el modelo con `ollama pull`, selecciónalo sin volver a descargarlo:
+
+```sh
+lazygit-ai use qwen2.5-coder:3b
+```
+
+| Comando | Qué hace |
+| --- | --- |
+| `lazygit-ai pull MODELO` | Descarga o actualiza el modelo y lo deja seleccionado, con la IA habilitada. |
+| `lazygit-ai list` | Lista los modelos disponibles y muestra la selección guardada. |
+| `lazygit-ai use MODELO` | Selecciona un modelo ya instalado y habilita la IA. |
+
+Después, abre o reinicia `lazygit-ai` en tu repositorio. Si falla la descarga, la selección anterior se conserva. Los comandos guardan automáticamente las opciones de IA y conservan las demás preferencias y comentarios de tu configuración.
 
 Si no hay un servidor en ejecución, inicia `ollama serve` en otra terminal y déjalo abierto. Si Ollama ya corre como aplicación o servicio, no necesitas iniciar otra instancia. La [guía de inicio de Ollama](https://docs.ollama.com/quickstart) explica el uso básico.
 
@@ -87,16 +103,30 @@ Puedes usar otros modelos de generación de texto que funcionen con `/api/genera
 | `qwen2.5-coder:3b` | Alternativa de tamaño intermedio. |
 | `qwen2.5-coder:7b` | Modelo predeterminado del fork. |
 
-El rendimiento depende del hardware, la memoria disponible y el tamaño del diff. Para cambiar de modelo, descárgalo y copia su nombre exacto al campo `ai.model`:
+El rendimiento depende del hardware, la memoria disponible y el tamaño del diff. Para cambiar a otro modelo:
 
 ```sh
-ollama pull qwen2.5-coder:3b
-ollama list
+lazygit-ai pull qwen2.5-coder:7b
+lazygit-ai list
 ```
+
+Para volver a uno que ya tienes descargado, usa `lazygit-ai use qwen2.5-coder:3b`. El nombre debe coincidir con el de Ollama; si omites la etiqueta, se utiliza `:latest`.
 
 ## Configurar lazygit-ai
 
-Encuentra la carpeta de configuración efectiva:
+**La configuración habitual se hace con `pull` o `use`; editar YAML es opcional.** Ambos comandos habilitan la IA y guardan la selección en la configuración global. También respetan `CONFIG_DIR`, `LG_CONFIG_FILE`, `--use-config-dir` y `--use-config-file`. Si utilizas varios archivos de configuración global, la selección se guarda en el último; una configuración específica de un repositorio puede sobreescribirla.
+
+Por ejemplo, para usar una carpeta independiente:
+
+```sh
+lazygit-ai --use-config-dir /ruta/a/mi-config pull qwen2.5-coder:3b
+lazygit-ai --use-config-dir /ruta/a/mi-config list
+lazygit-ai --use-config-dir /ruta/a/mi-config
+```
+
+### Configuración avanzada (opcional)
+
+Para cambiar el endpoint, el límite del diff u otras opciones, encuentra la carpeta de configuración efectiva:
 
 ```sh
 lazygit-ai --print-config-dir
@@ -226,7 +256,7 @@ El módulo Go conserva la ruta interna de upstream para facilitar su mantenimien
 Para actualizar una instalación compilada desde código fuente, ejecuta `git pull --ff-only`, vuelve a compilar y copia el nuevo binario a tu directorio de instalación.
 
 ```sh
-go test ./pkg/ai ./pkg/config ./pkg/gui/controllers/helpers -short
+go test ./pkg/app ./pkg/ai ./pkg/config ./pkg/gui/controllers/helpers -short
 ```
 
 La configuración de GoReleaser produce binarios llamados `lazygit-ai` (`lazygit-ai.exe` en Windows). Al subir un tag `vX.Y.Z`, GitHub Actions ejecuta las comprobaciones y publica los binarios y `checksums.txt` en este fork. La primera distribución del fork es `v1.0.1`; su numeración es independiente de upstream.
